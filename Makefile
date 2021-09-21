@@ -9,8 +9,9 @@ PY3_WITH_CYTHON=$(shell $(PYTHON3) -c 'import Cython.Compiler' >/dev/null 2>/dev
 
 MANYLINUX_IMAGE_X86_64=quay.io/pypa/manylinux2010_x86_64
 MANYLINUX_IMAGE_686=quay.io/pypa/manylinux2010_i686
+MANYLINUX_IMAGE_aarch64=quay.io/pypa/manylinux2014_aarch64
 
-.PHONY: all version inplace sdist build clean wheel_manylinux wheel_manylinux32 wheel_manylinux64 wheel
+.PHONY: all version inplace sdist build clean wheel_manylinux wheel_manylinux32 wheel_manylinux64 wheel_manylinuxaarch64 wheel
 
 all: inplace
 
@@ -30,7 +31,7 @@ build:
 wheel:
 	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON)
 
-wheel_manylinux: sdist wheel_manylinux64 wheel_manylinux32
+wheel_manylinux: sdist wheel_manylinux64 wheel_manylinux32 wheel_manylinuxaarch64
 
 wheel_manylinux32 wheel_manylinux64: dist/$(PACKAGENAME)-$(VERSION).tar.gz
 	echo "Building wheels for $(PACKAGENAME) $(VERSION)"
@@ -58,6 +59,34 @@ wheel_manylinux32 wheel_manylinux64: dist/$(PACKAGENAME)-$(VERSION).tar.gz
 		    done; \
 		    for whl in dist/$(PACKAGENAME)-$(VERSION)-*-linux_*.whl; do auditwheel repair $$whl -w /io/$$WHEELHOUSE; done; \
 		    '
+
+wheel_manylinuxaarch64: dist/$(PACKAGENAME)-$(VERSION).tar.gz
+	echo "Building wheels for $(PACKAGENAME) $(VERSION)"
+	mkdir -p wheelhouse$(subst wheel_manylinux,,$@)
+	docker run --rm --privileged hypriot/qemu-register
+	time docker run --rm -t \
+                -v $(shell pwd):/io \
+                -e CFLAGS="-O3 -g1 -mtune=generic -pipe -fPIC" \
+                -e LDFLAGS="$(LDFLAGS) -fPIC" \
+                -e WHEELHOUSE=wheelhouse$(subst wheel_manylinux,,$@) \
+                $(MANYLINUX_IMAGE_aarch64) \
+                bash -c '\
+                        rm -fr $(PACKAGENAME)-$(VERSION)/; \
+                        tar zxf /io/$< && cd $(PACKAGENAME)-$(VERSION)/ || exit 1; \
+                        for PYBIN in /opt/python/cp*/bin; do \
+                                PYVER="$$($$PYBIN/python -V)"; \
+                                PROFDIR="prof-$${PYVER// /_}"; \
+                                echo $$PYVER; \
+                                $$PYBIN/pip install -U pip setuptools; \
+                                make clean; rm -fr $$PROFDIR; \
+                                CFLAGS="$$CFLAGS -fprofile-generate -fprofile-dir=$$PROFDIR" $$PYBIN/python setup.py build_ext -i; \
+                                $$PYBIN/python lockbench.py flock; \
+                                CFLAGS="$$CFLAGS -fprofile-use -fprofile-correction -fprofile-dir=$$PROFDIR" $$PYBIN/python setup.py build_ext -i -f; \
+                                $$PYBIN/python lockbench.py rlock flock; \
+                                CFLAGS="$$CFLAGS -fprofile-use -fprofile-correction -fprofile-dir=$$PROFDIR" $$PYBIN/python setup.py bdist_wheel; \
+                    done; \
+                    for whl in dist/$(PACKAGENAME)-$(VERSION)-*-linux_*.whl; do auditwheel repair $$whl -w /io/$$WHEELHOUSE; done; \
+                    '
 
 clean:
 	find . \( -name '*.o' -o -name '*.so' -o -name '*.py[cod]' -o -name '*.dll' \) -exec rm -f {} \;
