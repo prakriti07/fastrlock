@@ -29,13 +29,8 @@ sdist:
 build:
 	$(PYTHON) setup.py $(SETUPFLAGS) build $(PYTHON_WITH_CYTHON)
 
-wheel:
-	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON)
-
-#wheel_manylinux: sdist wheel_manylinux64 wheel_manylinux32 wheel_manylinuxaarch64
-
 qemu-user-static:
-	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+	docker run --rm --privileged hypriot/qemu-register
 
 wheel_manylinux: sdist $(addprefix wheel_,$(MANYLINUX_IMAGES))
 $(addprefix wheel_,$(filter-out %_x86_64, $(filter-out %_i686, $(MANYLINUX_IMAGES)))): qemu-user-static
@@ -66,6 +61,8 @@ wheel_%: dist/$(PACKAGENAME)-$(VERSION).tar.gz
 		    done; \
 		    for whl in dist/$(PACKAGENAME)-$(VERSION)-*-linux_*.whl; do auditwheel repair $$whl -w /io/$$WHEELHOUSE; done; \
 		    '
+wheel:
+	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON)
 
 clean:
 	find . \( -name '*.o' -o -name '*.so' -o -name '*.py[cod]' -o -name '*.dll' \) -exec rm -f {} \;
