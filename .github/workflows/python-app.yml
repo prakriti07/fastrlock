@@ -19,4 +19,5 @@ jobs:
     - name: Building wheel
       run: |
         pip install cython
-        make wheel_manylinux
+        #make wheel_manylinux
+        make wheel
