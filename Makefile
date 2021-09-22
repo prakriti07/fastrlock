@@ -40,7 +40,7 @@ qemu-user-static:
 wheel_manylinux: sdist $(addprefix wheel_,$(MANYLINUX_IMAGES))
 $(addprefix wheel_,$(filter-out %_x86_64, $(filter-out %_i686, $(MANYLINUX_IMAGES)))): qemu-user-static
 
-wheel_manylinux2010_x86_64: dist/$(PACKAGENAME)-$(VERSION).tar.gz
+wheel_manylinux2010_x86_64 wheel_manylinux2010_i686 wheel_manylinux2014_aarch64: dist/$(PACKAGENAME)-$(VERSION).tar.gz
 	echo "Building wheels for $(PACKAGENAME) $(VERSION)"
 	mkdir -p wheelhouse$(subst wheel_manylinux,,$@)
 	time docker run --rm -t \
