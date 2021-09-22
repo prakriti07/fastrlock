@@ -7,9 +7,6 @@ VERSION=$(shell python -c 'import re; f=open("fastrlock/__init__.py"); print(re.
 PYTHON_WITH_CYTHON=$(shell $(PYTHON)  -c 'import Cython.Compiler' >/dev/null 2>/dev/null && echo " --with-cython" || true)
 PY3_WITH_CYTHON=$(shell $(PYTHON3) -c 'import Cython.Compiler' >/dev/null 2>/dev/null && echo " --with-cython" || true)
 
-MANYLINUX_IMAGE_X86_64=quay.io/pypa/manylinux2010_x86_64
-MANYLINUX_IMAGE_686=quay.io/pypa/manylinux2010_i686
-MANYLINUX_IMAGE_aarch64=quay.io/pypa/manylinux2014_aarch64
 MANYLINUX_IMAGES= \
 	manylinux2010_x86_64 \
 	manylinux2010_i686 \
@@ -35,12 +32,12 @@ build:
 wheel:
 	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON)
 
-wheel_manylinux: sdist wheel_manylinux64 wheel_manylinux32 wheel_manylinuxaarch64
+#wheel_manylinux: sdist wheel_manylinux64 wheel_manylinux32 wheel_manylinuxaarch64
 
 qemu-user-static:
 	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
-wheel_manylinux: $(addprefix wheel_,$(MANYLINUX_IMAGES))
+wheel_manylinux: $(addprefix wheel_,$(MANYLINUX_IMAGES)) sdist
 $(addprefix wheel_,$(filter-out %_x86_64, $(filter-out %_i686, $(MANYLINUX_IMAGES)))): qemu-user-static
 
 wheel_%: dist/$(PACKAGENAME)-$(VERSION).tar.gz
