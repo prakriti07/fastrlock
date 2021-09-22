@@ -37,7 +37,7 @@ wheel:
 qemu-user-static:
 	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
-wheel_manylinux: $(addprefix wheel_,$(MANYLINUX_IMAGES))
+wheel_manylinux: sdist $(addprefix wheel_,$(MANYLINUX_IMAGES))
 $(addprefix wheel_,$(filter-out %_x86_64, $(filter-out %_i686, $(MANYLINUX_IMAGES)))): qemu-user-static
 
 wheel_manylinux2010_x86_64: dist/$(PACKAGENAME)-$(VERSION).tar.gz
