@@ -28,6 +28,13 @@ jobs:
       with:
         name: wheels
         path: wheelhouse*
+    - name: Download Wheel
+      uses: actions/download-artifact@v2
+      with:
+        name: wheels
+        path: dist/
+    - name: Wheel in dist
+      run: ls -l dist/
     - name: Push build artifacts to PyPI
       #if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@v1.4.2
