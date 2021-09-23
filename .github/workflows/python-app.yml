@@ -27,7 +27,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: wheels
-        path: wheelhouse*
+        path: wheelhouse*/
     - name: Download Wheel
       uses: actions/download-artifact@v2
       with:
