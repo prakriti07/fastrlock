@@ -23,16 +23,18 @@ jobs:
       run: ls -l wheelhouse*/
     - name: Check wheel in dist
       run: ls -l dist/
-    - name: Upload Wheel
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels
-        path: wheelhouse*/fastrlock*.whl
-    - name: Download Wheel
-      uses: actions/download-artifact@v2
-      with:
-        name: wheels
-        path: dist/
+    - name: Copy wheels in dist
+      run: cp wheelhouse*/fastrlock*.whl dist/
+    #- name: Upload Wheel
+    #  uses: actions/upload-artifact@v2
+    #  with:
+    #    name: wheels
+    #    path: wheelhouse*/fastrlock*.whl
+    #- name: Download Wheel
+    #  uses: actions/download-artifact@v2
+    #  with:
+    #    name: wheels
+    #    path: dist/
     - name: Wheel in dist
       run: ls -l dist/
     - name: Push build artifacts to PyPI
